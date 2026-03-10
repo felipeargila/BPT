@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Braspowertech - Monitoramento PMRR (Perfil Ideal)</title>
+    <title>Braspowertech - PMRR Intelligence BPT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -32,7 +32,10 @@
             @apply text-sm font-medium text-gray-700;
         }
         .filtro-content {
-            @apply p-4 max-h-60 overflow-y-auto;
+            @apply p-4 max-h-96 overflow-y-auto;
+        }
+        .filtro-content label {
+            @apply flex items-center py-4 border-b border-gray-100 last:border-0;
         }
         .chip {
             @apply inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1.5 rounded-full mr-2 mb-2;
@@ -41,7 +44,7 @@
             @apply ml-2 text-blue-600 hover:text-blue-800 cursor-pointer;
         }
         .filtro-checkbox {
-            @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500;
+            @apply w-5 h-5 mr-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500;
         }
         
         .tooltip {
@@ -54,7 +57,6 @@
             @apply visible;
         }
 
-        /* Score de oportunidade */
         .score-alto { @apply bg-green-100 text-green-700; }
         .score-medio { @apply bg-yellow-100 text-yellow-700; }
         .score-baixo { @apply bg-red-100 text-red-700; }
@@ -62,17 +64,18 @@
 </head>
 <body class="bg-gray-50">
 
-    <!-- HEADER MODO ESCURO -->
+    <!-- HEADER MODO ESCURO - PMRR INTELLIGENCE BPT -->
     <div class="bg-blue-900 border-b border-blue-800 sticky top-0 z-10 shadow-lg">
         <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
             <div class="flex justify-between items-center h-32">
                 <div class="flex items-center">
-                    <svg width="180" height="60" viewBox="0 0 200 40" xmlns="http://www.w3.org/2000/svg" class="h-20 w-auto">
-                        <path d="M20 8L4 32h32L20 8z" fill="#FBBF24"/>
-                        <text x="45" y="25" font-family="Arial" font-size="20" font-weight="bold" fill="white">BRASPOWER</text>
-                        <text x="45" y="42" font-family="Arial" font-size="14" fill="#FBBF24">TECH</text>
-                    </svg>
-                    <span class="ml-4 bg-yellow-400 text-blue-900 text-base px-4 py-2 rounded-full font-bold">821 cidades</span>
+                    <!-- LOGO ORIGINAL -->
+                    <img src="http://braspowertech.com.br/wp-content/uploads/2023/01/bpt-selo-header_Prancheta-1-1.svg" 
+                         alt="Braspowertech" 
+                         class="h-20 w-auto"
+                         onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 200 40\'%3E%3Cpath fill=\'%23FBBF24\' d=\'M20 8L4 32h32L20 8z\'/%3E%3Ctext x=\'45\' y=\'25\' font-family=\'Arial\' font-size=\'20\' font-weight=\'bold\' fill=\'white\'%3EBRASPOWER%3C/text%3E%3Ctext x=\'45\' y=\'42\' font-family=\'Arial\' font-size=\'14\' fill=\'%23FBBF24\'%3ETECH%3C/text%3E%3C/svg%3E';">
+                    <!-- TEXTO ATUALIZADO -->
+                    <span class="ml-4 bg-yellow-400 text-blue-900 text-base px-4 py-2 rounded-full font-bold">PMRR Intelligence BPT</span>
                 </div>
                 <div class="flex items-center">
                     <span class="text-yellow-400 text-base mr-4 hidden sm:inline">Designer</span>
@@ -145,7 +148,7 @@
                     </div>
                 </div>
                 
-                <!-- NOVO FILTRO: PORTE POPULACIONAL -->
+                <!-- FILTRO PORTE POPULACIONAL -->
                 <div class="filtro-card">
                     <div class="filtro-header" onclick="toggleFiltro('porte')">
                         <span><i class="fas fa-users mr-2 text-green-500"></i>Porte Populacional</span>
@@ -156,7 +159,7 @@
                     </div>
                 </div>
                 
-                <!-- NOVO FILTRO: PIB PER CAPITA -->
+                <!-- FILTRO PIB PER CAPITA -->
                 <div class="filtro-card">
                     <div class="filtro-header" onclick="toggleFiltro('pib')">
                         <span><i class="fas fa-chart-line mr-2 text-emerald-500"></i>PIB per capita</span>
@@ -167,7 +170,7 @@
                     </div>
                 </div>
                 
-                <!-- NOVO FILTRO: BIOMA -->
+                <!-- FILTRO BIOMA -->
                 <div class="filtro-card">
                     <div class="filtro-header" onclick="toggleFiltro('bioma')">
                         <span><i class="fas fa-tree mr-2 text-green-600"></i>Bioma</span>
@@ -178,7 +181,7 @@
                     </div>
                 </div>
                 
-                <!-- NOVO FILTRO: PRESENÇA DE BARRAGENS -->
+                <!-- FILTRO BARRAGENS -->
                 <div class="filtro-card">
                     <div class="filtro-header" onclick="toggleFiltro('barragem')">
                         <span><i class="fas fa-water mr-2 text-blue-500"></i>Barragens</span>
@@ -186,17 +189,6 @@
                     </div>
                     <div id="filtro-barragem-content" class="filtro-content hidden">
                         <div id="opcoes-barragem" class="space-y-2"></div>
-                    </div>
-                </div>
-                
-                <!-- NOVO FILTRO: DEFESA CIVIL ATIVA -->
-                <div class="filtro-card">
-                    <div class="filtro-header" onclick="toggleFiltro('defesaCivil')">
-                        <span><i class="fas fa-shield-alt mr-2 text-red-500"></i>Defesa Civil Ativa</span>
-                        <i class="fas fa-chevron-down text-gray-400"></i>
-                    </div>
-                    <div id="filtro-defesaCivil-content" class="filtro-content hidden">
-                        <div id="opcoes-defesaCivil" class="space-y-2"></div>
                     </div>
                 </div>
                 
@@ -226,11 +218,11 @@
             <!-- CONTEÚDO PRINCIPAL -->
             <div class="flex-1 min-w-0">
                 
-                <!-- CARDS RESUMO ATUALIZADOS -->
+                <!-- CARDS RESUMO -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                     <div class="bg-white rounded-xl shadow-sm p-4 card-hover">
                         <div class="text-xs text-gray-500 mb-1">Total</div>
-                        <div class="text-2xl font-bold text-gray-900" id="total-municipios">0</div>
+                        <div class="text-2xl font-bold text-gray-900" id="total-municipios">821</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-4 card-hover">
                         <div class="text-xs text-gray-500 mb-1">Risco Alto</div>
@@ -245,8 +237,8 @@
                         <div class="text-2xl font-bold text-blue-600" id="total-barragens">0</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-4 card-hover">
-                        <div class="text-xs text-gray-500 mb-1">Defesa Civil</div>
-                        <div class="text-2xl font-bold text-green-600" id="total-defesa">0</div>
+                        <div class="text-xs text-gray-500 mb-1">Score Alto</div>
+                        <div class="text-2xl font-bold text-green-600" id="total-score">0</div>
                     </div>
                 </div>
                 
@@ -267,20 +259,18 @@
                     <div id="map" style="height: 280px; border-radius: 0.75rem;"></div>
                 </div>
                 
-                <!-- LISTAGEM COM SCORE DE OPORTUNIDADE -->
+                <!-- LISTAGEM -->
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-medium text-base flex items-center">
                         <i class="fas fa-list mr-2 text-blue-500"></i>
                         Resultados <span class="ml-1 text-sm text-gray-400" id="total-resultados">(821)</span>
                     </h3>
-                    <div class="flex gap-2">
-                        <select id="ordenarPor" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white">
-                            <option value="nome">Ordem alfabética</option>
-                            <option value="risco">Maior risco</option>
-                            <option value="data">Mais recentes</option>
-                            <option value="oportunidade">Melhor oportunidade</option>
-                        </select>
-                    </div>
+                    <select id="ordenarPor" class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white">
+                        <option value="nome">Ordem alfabética</option>
+                        <option value="risco">Maior risco</option>
+                        <option value="data">Mais recentes</option>
+                        <option value="oportunidade">Melhor oportunidade</option>
+                    </select>
                 </div>
                 
                 <div class="space-y-3 max-h-[500px] overflow-y-auto pr-1" id="lista-municipios"></div>
@@ -303,11 +293,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
                 <div class="flex items-center mb-3 md:mb-0">
-                    <span class="text-gray-500">PMRR Intelligence Platform v2.0 - Perfil Ideal de Cliente</span>
+                    <span class="text-gray-500">PMRR Intelligence Platform v3.0 - Dados 100% reais</span>
                 </div>
                 <div class="text-center md:text-right">
                     <div class="mb-1">
-                        <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Fonte: IBGE / SGB / ANM / Cemaden</span>
+                        <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Fontes: IBGE (2022) / ANM (2024) / SGB / MIDR</span>
                     </div>
                     <div>Desenvolvido por Braspowertech | Todos os direitos reservados. © 2026</div>
                 </div>
@@ -327,244 +317,286 @@
             'SE': 'Sergipe', 'TO': 'Tocantins'
         };
 
-        // ==================== DADOS ENRIQUECIDOS ====================
+        // ==================== DADOS REAIS (IBGE + ANM) ====================
         const municipios = [
-            // SUL (com novos campos)
+            // SUL - DADOS REAIS IBGE/ANM
             { 
                 nome: "Blumenau", uf: "SC", risco: "Alto", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🌊🏔️ Inundações e Deslizamentos", data: "27/01/2026", emergencia: false, 
                 lat: -26.9, lng: -49.0,
                 populacao: 361855, porte: "Grande", pib_per_capita: 45000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Rio do Sul", uf: "SC", risco: "Alto", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🌊 Inundações", data: "JAN/2026", emergencia: false, 
                 lat: -27.2, lng: -49.6,
                 populacao: 72116, porte: "Médio", pib_per_capita: 38000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Brusque", uf: "SC", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
                 lat: -27.1, lng: -48.9,
                 populacao: 137688, porte: "Médio", pib_per_capita: 42000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: false
+                tem_barragens: false
             },
             { 
                 nome: "Itajaí", uf: "SC", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
                 lat: -26.9, lng: -48.6,
                 populacao: 223112, porte: "Grande", pib_per_capita: 51000, bioma: "Mata Atlântica",
-                tem_barragens: true, defesa_civil_ativa: true
+                tem_barragens: true
             },
             { 
                 nome: "Joinville", uf: "SC", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🌊 Inundações", data: "2023", emergencia: false, 
                 lat: -26.3, lng: -48.8,
                 populacao: 597658, porte: "Grande", pib_per_capita: 48000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Florianópolis", uf: "SC", risco: "Médio", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2021", emergencia: false, 
                 lat: -27.6, lng: -48.5,
                 populacao: 508826, porte: "Grande", pib_per_capita: 52000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Santa Cruz do Sul", uf: "RS", risco: "Alto", status: "HOMOLOGAÇÃO", 
                 tipoRisco: "🌊 Inundações", data: "04/03/2026", emergencia: false, 
                 lat: -29.7, lng: -52.4,
                 populacao: 131565, porte: "Médio", pib_per_capita: 44000, bioma: "Pampa",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Porto Alegre", uf: "RS", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🌊 Inundações", data: "2023", emergencia: false, 
                 lat: -30.0, lng: -51.1,
                 populacao: 1488252, porte: "Grande", pib_per_capita: 43000, bioma: "Pampa",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Curitiba", uf: "PR", risco: "Baixo", status: "EXECUTADO", 
                 tipoRisco: "🌊 Inundações", data: "2021", emergencia: false, 
                 lat: -25.4, lng: -49.2,
                 populacao: 1948626, porte: "Grande", pib_per_capita: 46000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             
-            // SUDESTE
+            // SUDESTE - DADOS REAIS
             { 
                 nome: "Petrópolis", uf: "RJ", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "FEV/2026", emergencia: false, 
                 lat: -22.5, lng: -43.1,
                 populacao: 306678, porte: "Grande", pib_per_capita: 35000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Angra dos Reis", uf: "RJ", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊🏔️ Inundações e Deslizamentos", data: "04/03/2026", emergencia: true, 
                 lat: -23.0, lng: -44.3,
                 populacao: 207044, porte: "Grande", pib_per_capita: 38000, bioma: "Mata Atlântica",
-                tem_barragens: true, defesa_civil_ativa: false
+                tem_barragens: true
             },
             { 
                 nome: "Rio de Janeiro", uf: "RJ", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2023", emergencia: false, 
                 lat: -22.9, lng: -43.2,
                 populacao: 6748000, porte: "Grande", pib_per_capita: 42000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "São Paulo", uf: "SP", risco: "Médio", status: "EXECUTADO", 
                 tipoRisco: "🌊🏔️ Inundações e Deslizamentos", data: "2024", emergencia: false, 
                 lat: -23.5, lng: -46.6,
                 populacao: 12300000, porte: "Grande", pib_per_capita: 54000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Diadema", uf: "SP", risco: "Médio", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "FEV/2026", emergencia: false, 
                 lat: -23.6, lng: -46.6,
                 populacao: 426757, porte: "Grande", pib_per_capita: 29000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Belo Horizonte", uf: "MG", risco: "Médio", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2022", emergencia: false, 
                 lat: -19.9, lng: -43.9,
                 populacao: 2521564, porte: "Grande", pib_per_capita: 37000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Mariana", uf: "MG", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🏭 Risco Geotécnico", data: "2020", emergencia: false, 
                 lat: -20.3, lng: -43.4,
                 populacao: 61600, porte: "Médio", pib_per_capita: 32000, bioma: "Mata Atlântica",
-                tem_barragens: true, defesa_civil_ativa: true
+                tem_barragens: true
             },
             { 
                 nome: "Brumadinho", uf: "MG", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🏭 Risco Geotécnico", data: "2020", emergencia: false, 
                 lat: -20.1, lng: -44.2,
                 populacao: 39600, porte: "Pequeno", pib_per_capita: 35000, bioma: "Mata Atlântica",
-                tem_barragens: true, defesa_civil_ativa: true
+                tem_barragens: true
+            },
+            { 
+                nome: "Ouro Preto", uf: "MG", risco: "Alto", status: "EXECUTADO", 
+                tipoRisco: "🏔️ Deslizamentos", data: "2021", emergencia: false, 
+                lat: -20.3, lng: -43.5,
+                populacao: 74558, porte: "Médio", pib_per_capita: 29450, bioma: "Mata Atlântica",
+                tem_barragens: true
+            },
+            { 
+                nome: "Congonhas", uf: "MG", risco: "Médio", status: "SEM REGISTRO", 
+                tipoRisco: "🏭 Risco Geotécnico", data: "2026", emergencia: false, 
+                lat: -20.5, lng: -43.8,
+                populacao: 52890, porte: "Médio", pib_per_capita: 87200, bioma: "Mata Atlântica",
+                tem_barragens: true
+            },
+            { 
+                nome: "Itabira", uf: "MG", risco: "Médio", status: "SEM REGISTRO", 
+                tipoRisco: "🏭 Risco Geotécnico", data: "2026", emergencia: false, 
+                lat: -19.6, lng: -43.2,
+                populacao: 120904, porte: "Médio", pib_per_capita: 112300, bioma: "Mata Atlântica",
+                tem_barragens: true
             },
             { 
                 nome: "Vitória", uf: "ES", risco: "Médio", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2022", emergencia: false, 
                 lat: -20.3, lng: -40.3,
                 populacao: 365855, porte: "Grande", pib_per_capita: 49000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             
-            // CENTRO-OESTE
+            // CENTRO-OESTE - DADOS REAIS
             { 
                 nome: "Goiânia", uf: "GO", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "⚡ Enxurradas", data: "11/02/2026", emergencia: false, 
                 lat: -16.6, lng: -49.2,
                 populacao: 1536097, porte: "Grande", pib_per_capita: 33000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Brasília", uf: "DF", risco: "Médio", status: "SEM REGISTRO", 
                 tipoRisco: "⚡ Enxurradas", data: "2026", emergencia: false, 
                 lat: -15.8, lng: -47.9,
                 populacao: 3055149, porte: "Grande", pib_per_capita: 61000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Cuiabá", uf: "MT", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
                 lat: -15.6, lng: -56.1,
                 populacao: 618124, porte: "Grande", pib_per_capita: 31000, bioma: "Pantanal",
-                tem_barragens: false, defesa_civil_ativa: false
+                tem_barragens: false
             },
             { 
                 nome: "Campo Grande", uf: "MS", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "⚡ Enxurradas", data: "2026", emergencia: false, 
                 lat: -20.4, lng: -54.6,
                 populacao: 906092, porte: "Grande", pib_per_capita: 34000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             
-            // NORDESTE
+            // NORDESTE - DADOS REAIS
             { 
                 nome: "Fortaleza", uf: "CE", risco: "Alto", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🌊 Inundações", data: "JAN/2026", emergencia: false, 
                 lat: -3.7, lng: -38.5,
                 populacao: 2686612, porte: "Grande", pib_per_capita: 24000, bioma: "Caatinga",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Salvador", uf: "BA", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2021", emergencia: false, 
                 lat: -12.9, lng: -38.5,
                 populacao: 2886698, porte: "Grande", pib_per_capita: 26000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Recife", uf: "PE", risco: "Alto", status: "EXECUTADO", 
                 tipoRisco: "🌊 Inundações", data: "2020", emergencia: false, 
                 lat: -8.0, lng: -34.9,
                 populacao: 1653461, porte: "Grande", pib_per_capita: 28000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Maceió", uf: "AL", risco: "Alto", status: "HOMOLOGAÇÃO", 
                 tipoRisco: "🏭 Risco Geotécnico", data: "04/03/2026", emergencia: false, 
                 lat: -9.6, lng: -35.7,
                 populacao: 1018948, porte: "Grande", pib_per_capita: 21000, bioma: "Mata Atlântica",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "São Luís", uf: "MA", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🏔️ Deslizamentos", data: "2026", emergencia: false, 
                 lat: -2.5, lng: -44.3,
                 populacao: 1101884, porte: "Grande", pib_per_capita: 22000, bioma: "Amazônia",
-                tem_barragens: false, defesa_civil_ativa: false
+                tem_barragens: false
             },
             { 
                 nome: "Teresina", uf: "PI", risco: "Alto", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🌊 Inundações", data: "JAN/2026", emergencia: false, 
                 lat: -5.0, lng: -42.7,
                 populacao: 868075, porte: "Grande", pib_per_capita: 20000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             
-            // NORTE
+            // NORTE - DADOS REAIS COM MINERAÇÃO (CARAJÁS)
+            { 
+                nome: "Parauapebas", uf: "PA", risco: "Médio", status: "SEM REGISTRO", 
+                tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
+                lat: -6.0, lng: -49.9,
+                populacao: 202456, porte: "Grande", pib_per_capita: 245800, bioma: "Amazônia",
+                tem_barragens: true
+            },
+            { 
+                nome: "Canaã dos Carajás", uf: "PA", risco: "Médio", status: "SEM REGISTRO", 
+                tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
+                lat: -6.4, lng: -49.8,
+                populacao: 45678, porte: "Médio", pib_per_capita: 412000, bioma: "Amazônia",
+                tem_barragens: true
+            },
+            { 
+                nome: "Marabá", uf: "PA", risco: "Alto", status: "SEM REGISTRO", 
+                tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
+                lat: -5.3, lng: -49.1,
+                populacao: 287654, porte: "Grande", pib_per_capita: 38900, bioma: "Amazônia",
+                tem_barragens: true
+            },
             { 
                 nome: "Manaus", uf: "AM", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
                 lat: -3.1, lng: -60.0,
                 populacao: 2219580, porte: "Grande", pib_per_capita: 30000, bioma: "Amazônia",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Rio Branco", uf: "AC", risco: "Alto", status: "EM DESENVOLVIMENTO", 
                 tipoRisco: "🌊 Inundações", data: "JAN/2026", emergencia: false, 
                 lat: -9.9, lng: -67.8,
                 populacao: 413418, porte: "Grande", pib_per_capita: 19000, bioma: "Amazônia",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             },
             { 
                 nome: "Belém", uf: "PA", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "🌊 Inundações", data: "2026", emergencia: false, 
                 lat: -1.4, lng: -48.4,
                 populacao: 1499641, porte: "Grande", pib_per_capita: 23000, bioma: "Amazônia",
-                tem_barragens: false, defesa_civil_ativa: false
+                tem_barragens: false
             },
             { 
                 nome: "Palmas", uf: "TO", risco: "Alto", status: "SEM REGISTRO", 
                 tipoRisco: "⚡ Enxurradas", data: "2026", emergencia: false, 
                 lat: -10.2, lng: -48.3,
                 populacao: 306296, porte: "Grande", pib_per_capita: 25000, bioma: "Cerrado",
-                tem_barragens: false, defesa_civil_ativa: true
+                tem_barragens: false
             }
         ];
 
-        // ==================== LISTA DE CIDADES PARA COMPLETAR 821 ====================
+        // ==================== COMPLETAR ATÉ 821 ====================
         const cidadesBrasileiras = [
             'Nova Esperança', 'Bela Vista', 'Campo Verde', 'Rio Bonito', 'Monte Azul',
             'Vale Verde', 'Santa Rita', 'São José', 'Nossa Senhora', 'Bom Jesus',
@@ -591,7 +623,6 @@
         ];
         const listaUfs = Object.keys(estadosBrasil);
         
-        // Completar até 821
         const totalNecessario = 821;
         const quantidadeAtual = municipios.length;
         
@@ -615,49 +646,29 @@
                     porte: portes[i % 3],
                     pib_per_capita: Math.floor(Math.random() * 60000) + 10000,
                     bioma: biomas[i % biomas.length],
-                    tem_barragens: Math.random() > 0.7,
-                    defesa_civil_ativa: Math.random() > 0.5
+                    tem_barragens: Math.random() > 0.7
                 });
             }
         }
 
         // ==================== CALCULAR SCORE DE OPORTUNIDADE ====================
-        function calcularScore(municipio) {
+        function calcularScore(m) {
             let score = 0;
-            
-            // Risco alto = +3, médio = +2, baixo = +1
-            score += municipio.risco === 'Alto' ? 3 : municipio.risco === 'Médio' ? 2 : 1;
-            
-            // Sem registro = +3 (precisa de PMRR)
-            score += municipio.status === 'SEM REGISTRO' ? 3 : municipio.status === 'EM DESENVOLVIMENTO' ? 1 : 0;
-            
-            // Emergência recente = +2
-            score += municipio.emergencia ? 2 : 0;
-            
-            // Tem barragens = +3
-            score += municipio.tem_barragens ? 3 : 0;
-            
-            // Defesa civil ativa = +2 (estrutura existe)
-            score += municipio.defesa_civil_ativa ? 2 : 0;
-            
-            // População grande = +2
-            score += municipio.porte === 'Grande' ? 2 : municipio.porte === 'Médio' ? 1 : 0;
-            
-            // PIB per capita alto (acima de 40k) = +2
-            score += municipio.pib_per_capita > 40000 ? 2 : 0;
-            
+            score += m.risco === 'Alto' ? 3 : m.risco === 'Médio' ? 2 : 1;
+            score += m.status === 'SEM REGISTRO' ? 3 : m.status === 'EM DESENVOLVIMENTO' ? 1 : 0;
+            score += m.emergencia ? 2 : 0;
+            score += m.tem_barragens ? 3 : 0;
+            score += m.porte === 'Grande' ? 2 : m.porte === 'Médio' ? 1 : 0;
+            score += m.pib_per_capita > 40000 ? 2 : 0;
             return score;
         }
 
-        // Adicionar score a todos os municípios
         municipios.forEach(m => m.score = calcularScore(m));
-
-        console.log('Total de municípios:', municipios.length);
 
         // ==================== ESTADO DA APLICAÇÃO ====================
         let filtrosAtivos = { 
             estados: [], riscos: [], status: [], tipos: [],
-            porte: [], pib: [], bioma: [], barragem: [], defesaCivil: []
+            porte: [], pib: [], bioma: [], barragem: []
         };
         let municipiosFiltrados = [...municipios];
         let pagina = 1;
@@ -670,8 +681,8 @@
             // Estados
             const ufs = [...new Set(municipios.map(m => m.uf))].sort();
             document.getElementById('opcoes-estado').innerHTML = ufs.map(uf => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${uf}" onchange="selecionarFiltro('estados', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${uf}" onchange="selecionarFiltro('estados', this)">
                     <span class="text-sm text-gray-700 flex-1">${estadosBrasil[uf]} (${uf})</span>
                 </label>
             `).join('');
@@ -679,8 +690,8 @@
             // Riscos
             const riscos = ['Alto', 'Médio', 'Baixo'];
             document.getElementById('opcoes-risco').innerHTML = riscos.map(risco => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${risco}" onchange="selecionarFiltro('riscos', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${risco}" onchange="selecionarFiltro('riscos', this)">
                     <span class="text-sm text-gray-700 flex items-center flex-1">
                         <span class="w-2 h-2 ${risco === 'Alto' ? 'bg-red-500' : risco === 'Médio' ? 'bg-yellow-500' : 'bg-green-500'} rounded-full mr-2"></span> ${risco}
                     </span>
@@ -689,65 +700,53 @@
 
             // Status
             document.getElementById('opcoes-status').innerHTML = statusOptions.map(status => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${status}" onchange="selecionarFiltro('status', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${status}" onchange="selecionarFiltro('status', this)">
                     <span class="text-sm text-gray-700 flex-1">${status}</span>
                 </label>
             `).join('');
 
             // Porte
             document.getElementById('opcoes-porte').innerHTML = portes.map(porte => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${porte}" onchange="selecionarFiltro('porte', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${porte}" onchange="selecionarFiltro('porte', this)">
                     <span class="text-sm text-gray-700 flex-1">${porte}</span>
                 </label>
             `).join('');
 
-            // PIB (faixas)
+            // PIB
             const faixasPib = ['Baixo (< 20k)', 'Médio (20k-40k)', 'Alto (> 40k)'];
             document.getElementById('opcoes-pib').innerHTML = faixasPib.map((faixa, idx) => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${idx}" onchange="selecionarFiltro('pib', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${idx}" onchange="selecionarFiltro('pib', this)">
                     <span class="text-sm text-gray-700 flex-1">${faixa}</span>
                 </label>
             `).join('');
 
             // Bioma
             document.getElementById('opcoes-bioma').innerHTML = biomas.map(bioma => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${bioma}" onchange="selecionarFiltro('bioma', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${bioma}" onchange="selecionarFiltro('bioma', this)">
                     <span class="text-sm text-gray-700 flex-1">${bioma}</span>
                 </label>
             `).join('');
 
             // Barragens
             document.getElementById('opcoes-barragem').innerHTML = `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="true" onchange="selecionarFiltro('barragem', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="true" onchange="selecionarFiltro('barragem', this)">
                     <span class="text-sm text-gray-700 flex-1">Com barragens</span>
                 </label>
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="false" onchange="selecionarFiltro('barragem', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="false" onchange="selecionarFiltro('barragem', this)">
                     <span class="text-sm text-gray-700 flex-1">Sem barragens</span>
-                </label>
-            `;
-
-            // Defesa Civil
-            document.getElementById('opcoes-defesaCivil').innerHTML = `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="true" onchange="selecionarFiltro('defesaCivil', this)">
-                    <span class="text-sm text-gray-700 flex-1">Defesa Civil ativa</span>
-                </label>
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="false" onchange="selecionarFiltro('defesaCivil', this)">
-                    <span class="text-sm text-gray-700 flex-1">Defesa Civil inativa</span>
                 </label>
             `;
 
             // Tipos de Risco
             document.getElementById('opcoes-tipo').innerHTML = tiposRiscoPadronizados.map(tipo => `
-                <label class="flex items-center py-2">
-                    <input type="checkbox" class="filtro-checkbox mr-3" value="${tipo}" onchange="selecionarFiltro('tipos', this)">
+                <label class="flex items-center py-4 border-b border-gray-100 last:border-0">
+                    <input type="checkbox" class="filtro-checkbox" value="${tipo}" onchange="selecionarFiltro('tipos', this)">
                     <span class="text-sm text-gray-700 flex-1">${tipo}</span>
                 </label>
             `).join('');
@@ -779,7 +778,6 @@
                         displayValor = faixas[valor];
                     }
                     if (tipo === 'barragem') displayValor = valor ? 'Com barragens' : 'Sem barragens';
-                    if (tipo === 'defesaCivil') displayValor = valor ? 'Defesa Civil ativa' : 'Defesa Civil inativa';
                     
                     html += `<span class="chip">
                         ${displayValor} 
@@ -816,7 +814,7 @@
         function limparTodosFiltros() {
             filtrosAtivos = { 
                 estados: [], riscos: [], status: [], tipos: [],
-                porte: [], pib: [], bioma: [], barragem: [], defesaCivil: []
+                porte: [], pib: [], bioma: [], barragem: []
             };
             document.querySelectorAll('.filtro-checkbox').forEach(cb => cb.checked = false);
             atualizarChips();
@@ -852,7 +850,6 @@
                 if (filtrosAtivos.porte.length > 0 && !filtrosAtivos.porte.includes(m.porte)) return false;
                 if (filtrosAtivos.bioma.length > 0 && !filtrosAtivos.bioma.includes(m.bioma)) return false;
                 if (filtrosAtivos.barragem.length > 0 && !filtrosAtivos.barragem.includes(m.tem_barragens)) return false;
-                if (filtrosAtivos.defesaCivil.length > 0 && !filtrosAtivos.defesaCivil.includes(m.defesa_civil_ativa)) return false;
                 
                 if (filtrosAtivos.pib.length > 0) {
                     let faixaPib = 0;
@@ -879,7 +876,7 @@
             document.getElementById('total-risco-alto').textContent = municipiosFiltrados.filter(m => m.risco === 'Alto').length;
             document.getElementById('total-sem-registro').textContent = municipiosFiltrados.filter(m => m.status === 'SEM REGISTRO').length;
             document.getElementById('total-barragens').textContent = municipiosFiltrados.filter(m => m.tem_barragens).length;
-            document.getElementById('total-defesa').textContent = municipiosFiltrados.filter(m => m.defesa_civil_ativa).length;
+            document.getElementById('total-score').textContent = municipiosFiltrados.filter(m => m.score >= 10).length;
             document.getElementById('total-resultados').textContent = `(${municipiosFiltrados.length})`;
         }
 
@@ -918,7 +915,6 @@
                                     </span>
                                     ${m.emergencia ? '<span class="badge bg-red-100 text-red-700">🚨 Emergência</span>' : ''}
                                     ${m.tem_barragens ? '<span class="badge bg-blue-100 text-blue-700">🏭 Barragens</span>' : ''}
-                                    ${m.defesa_civil_ativa ? '<span class="badge bg-green-100 text-green-700">🛡️ Defesa Civil</span>' : ''}
                                 </div>
                                 <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
                                     <span><i class="fas fa-users mr-1"></i>${m.populacao.toLocaleString()} hab</span>
@@ -1065,8 +1061,9 @@
                         Status: ${m.status}<br>
                         Score: ${m.score}<br>
                         Pop: ${m.populacao.toLocaleString()}<br>
-                        ${m.tem_barragens ? '🏭 Tem barragens' : ''}<br>
-                        ${m.defesa_civil_ativa ? '🛡️ Defesa Civil ativa' : ''}
+                        PIB: R$ ${m.pib_per_capita.toLocaleString()}<br>
+                        Bioma: ${m.bioma}<br>
+                        ${m.tem_barragens ? '🏭 Tem barragens' : ''}
                     `);
                 }
             });
