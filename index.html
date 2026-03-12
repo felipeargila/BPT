@@ -216,8 +216,8 @@ const CRM_COLUMNS = [
 ];
 
 let activeTab = 'pmrr';
-let pmrrFiltros = { estados: [], status: [], tipos: [], porte: [], pib: [], barragem: [] };
-let mineradorasFiltros = { uf: [], minerio: [], cri: [], dpa: [], emergencia: [] };
+let pmrrFiltros = { estados: [], status: [], tipos: [], porte: [], pib: [], barragem: [], pessoasRisco: [] };
+let mineradorasFiltros = { uf: [], minerio: [], barragem: [], cri: [], dpa: [], emergencia: [] };
 let pmrrBusca = '';
 let mineradorasBusca = '';
 let pmrrFiltrados = [...municipios];
@@ -279,6 +279,59 @@ function getPibFaixa(v) {
   return '+10k';
 }
 
+
+function getPessoasRiscoFaixa(v) {
+  const n = Number(v || 0);
+  if (n <= 1000) return 'Até 1 mil';
+  if (n <= 5000) return '1 mil a 5 mil';
+  if (n <= 20000) return '5 mil a 20 mil';
+  return '20 mil+';
+}
+
+function normalizeMinerioGroup(value) {
+  const t = normalizeText(value);
+  if (!t) return 'Outros';
+  if (t.includes('ferro')) return 'Ferro';
+  if (t.includes('ouro')) return 'Ouro';
+  if (t.includes('cobre')) return 'Cobre';
+  if (t.includes('niquel')) return 'Níquel';
+  if (t.includes('bauxita') || t.includes('alumin')) return 'Bauxita / Alumínio';
+  if (t.includes('mangan')) return 'Manganês';
+  if (t.includes('calcario')) return 'Calcário';
+  if (t.includes('cassiterita') || t.includes('estanho')) return 'Estanho';
+  if (t.includes('fosf')) return 'Fosfato';
+  if (t.includes('zinco')) return 'Zinco';
+  if (t.includes('chumbo')) return 'Chumbo';
+  if (t.includes('caulim')) return 'Caulim';
+  if (t.includes('niob')) return 'Nióbio';
+  if (t.includes('granito') || t.includes('basalto') || t.includes('brita') || t.includes('areia') || t.includes('rocha')) return 'Agregados / Rochas';
+  return 'Outros';
+}
+
+function normalizeSeverityLabel(value) {
+  const t = normalizeText(value);
+  if (!t || t.includes('nao informado') || t.includes('não informado')) return 'Sem informação';
+  if (t.includes('alta')) return 'Alta';
+  if (t.includes('media') || t.includes('média')) return 'Média';
+  if (t.includes('baixa')) return 'Baixa';
+  return (value || 'Sem informação').toString().trim();
+}
+
+function normalizeEmergencyLabel(value) {
+  const t = normalizeText(value);
+  if (!t || t.includes('sem inform')) return 'Sem informação';
+  if (t.includes('nivel 3') || t.includes('nível 3')) return 'Nível 3';
+  if (t.includes('nivel 2') || t.includes('nível 2')) return 'Nível 2';
+  if (t.includes('nivel 1') || t.includes('nível 1')) return 'Nível 1';
+  if (t.includes('sem emergencia') || t.includes('sem emergência')) return 'Sem emergência';
+  if (t.includes('nivel') || t.includes('nível')) return 'Com nível de emergência';
+  return 'Sem informação';
+}
+
+function normalizeBarragemPresence(value) {
+  return Number(value || 0) > 0 ? 'Com barragem' : 'Sem barragem';
+}
+
 function badgeForPMRR(status) {
   const label = normalizePMRRStatus(status);
   if (label === 'Executado') return '<span class="badge bg-soft-green">Executado</span>';
@@ -298,24 +351,27 @@ function badgeForRiskType(tipo) {
 }
 
 function badgeForCRI(value) {
-  const v = (value || '').toLowerCase();
-  if (v.includes('alta')) return '<span class="badge bg-soft-red">CRI alta</span>';
-  if (v.includes('média') || v.includes('media')) return '<span class="badge bg-soft-yellow">CRI média</span>';
-  return '<span class="badge bg-soft-green">CRI baixa</span>';
+  const v = normalizeSeverityLabel(value);
+  if (v === 'Alta') return '<span class="badge bg-soft-red">CRI alta</span>';
+  if (v === 'Média') return '<span class="badge bg-soft-yellow">CRI média</span>';
+  if (v === 'Baixa') return '<span class="badge bg-soft-green">CRI baixa</span>';
+  return '<span class="badge bg-soft-gray">CRI sem informação</span>';
 }
 
 function badgeForDPA(value) {
-  const v = (value || '').toLowerCase();
-  if (v.includes('alta')) return '<span class="badge bg-soft-red">DPA alta</span>';
-  if (v.includes('média') || v.includes('media')) return '<span class="badge bg-soft-yellow">DPA média</span>';
-  return '<span class="badge bg-soft-green">DPA baixa</span>';
+  const v = normalizeSeverityLabel(value);
+  if (v === 'Alta') return '<span class="badge bg-soft-red">DPA alta</span>';
+  if (v === 'Média') return '<span class="badge bg-soft-yellow">DPA média</span>';
+  if (v === 'Baixa') return '<span class="badge bg-soft-green">DPA baixa</span>';
+  return '<span class="badge bg-soft-gray">DPA sem informação</span>';
 }
 
 function badgeForEmergency(value) {
-  const v = value || 'Sem informação';
-  if (v.toLowerCase().includes('nivel 3') || v.toLowerCase().includes('nível 3')) return '<span class="badge bg-soft-red">' + v + '</span>';
-  if (v.toLowerCase().includes('nivel') || v.toLowerCase().includes('nível')) return '<span class="badge bg-soft-yellow">' + v + '</span>';
-  return '<span class="badge bg-soft-green">' + v + '</span>';
+  const v = normalizeEmergencyLabel(value);
+  if (v === 'Nível 3') return '<span class="badge bg-soft-red">' + v + '</span>';
+  if (v === 'Nível 2' || v === 'Nível 1' || v === 'Com nível de emergência') return '<span class="badge bg-soft-yellow">' + v + '</span>';
+  if (v === 'Sem emergência') return '<span class="badge bg-soft-green">' + v + '</span>';
+  return '<span class="badge bg-soft-gray">Sem informação</span>';
 }
 
 function topCounts(arr, getter, topN = 6) {
@@ -359,11 +415,12 @@ function getPMRRTags(item) {
 function getMineradoraTags(item) {
   const tags = [
     '<span class="tag-chip tag-min">Mineradora</span>',
-    `<span class="tag-chip tag-neutral">${getEstadoLabel(item.uf)}</span>`
+    `<span class="tag-chip tag-neutral">${getEstadoLabel(item.uf)}</span>`,
+    `<span class="tag-chip tag-neutral">${normalizeMinerioGroup(item.minerio_referencia)}</span>`,
+    `<span class="tag-chip tag-neutral">${normalizeBarragemPresence(item.barragens_ativas)}</span>`
   ];
-  if (item.minerio_referencia) tags.push(`<span class="tag-chip tag-neutral">${item.minerio_referencia}</span>`);
-  if ((item.barragens_ativas || 0) > 0) tags.push(`<span class="tag-chip tag-neutral">${item.barragens_ativas} barragem(ns)</span>`);
-  if (normalizeText(item.nivel_emergencia).includes('nivel')) tags.push(`<span class="tag-chip tag-neutral">${item.nivel_emergencia}</span>`);
+  const emergencia = normalizeEmergencyLabel(item.nivel_emergencia);
+  if (emergencia !== 'Sem informação' && emergencia !== 'Sem emergência') tags.push(`<span class="tag-chip tag-neutral">${emergencia}</span>`);
   return tags.join('');
 }
 
@@ -541,26 +598,30 @@ function renderSidebar() {
     const porte = [...new Set(municipios.map(m => m.porte || 'Não informado'))].sort();
     const tipos = [...new Set(municipios.map(m => normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado')))].sort();
     const pib = ['até 3k','3k-6k','6k-10k','+10k'];
+    const pessoasRisco = ['Até 1 mil', '1 mil a 5 mil', '5 mil a 20 mil', '20 mil+'];
     sidebar.innerHTML = `
       ${buildAccordionFilter('Estado', 'fa-map-pin', 'blue', estados.map(v => [v, getEstadoLabel(v)]), pmrrFiltros.estados, 'pmrr', 'estados')}
       ${buildAccordionFilter('Status PMRR', 'fa-tag', 'purple', status.map(v => [v, v]), pmrrFiltros.status, 'pmrr', 'status')}
+      ${buildAccordionFilter('Tipo de risco', 'fa-cloud-rain', 'blue', tipos.map(v => [v, v]), pmrrFiltros.tipos, 'pmrr', 'tipos')}
+      ${buildAccordionFilter('Pessoas em risco', 'fa-people-group', 'red', pessoasRisco.map(v => [v, v]), pmrrFiltros.pessoasRisco, 'pmrr', 'pessoasRisco')}
       ${buildAccordionFilter('Porte populacional', 'fa-users', 'green', porte.map(v => [v, v]), pmrrFiltros.porte, 'pmrr', 'porte')}
       ${buildAccordionFilter('PIB per capita', 'fa-chart-line', 'emerald', pib.map(v => [v, v]), pmrrFiltros.pib, 'pmrr', 'pib')}
       ${buildAccordionFilter('Barragens', 'fa-water', 'blue', [['sim', 'Com barragens'], ['nao', 'Sem barragens']], pmrrFiltros.barragem, 'pmrr', 'barragem')}
-      ${buildAccordionFilter('Tipo de risco', 'fa-cloud-rain', 'blue', tipos.map(v => [v, v]), pmrrFiltros.tipos, 'pmrr', 'tipos')}
       <div class="flex gap-3 mt-4">
         <button onclick="resetFilters('pmrr')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar filtros</button>
       </div>
     `;
   } else {
     const uf = [...new Set(mineradoras.map(m => m.uf))].sort();
-    const minerio = [...new Set(mineradoras.map(m => m.minerio_referencia || 'Não informado'))].sort();
-    const cri = [...new Set(mineradoras.map(m => m.cri_max || 'Não informado'))].sort();
-    const dpa = [...new Set(mineradoras.map(m => m.dpa_max || 'Não informado'))].sort();
-    const emergencia = [...new Set(mineradoras.map(m => m.nivel_emergencia || 'Sem informação'))].sort();
+    const minerio = [...new Set(mineradoras.map(m => normalizeMinerioGroup(m.minerio_referencia)))].sort();
+    const barragem = ['Com barragem', 'Sem barragem'];
+    const cri = ['Alta', 'Média', 'Baixa', 'Sem informação'];
+    const dpa = ['Alta', 'Média', 'Baixa', 'Sem informação'];
+    const emergencia = ['Nível 3', 'Nível 2', 'Nível 1', 'Sem emergência', 'Sem informação'];
     sidebar.innerHTML = `
       ${buildAccordionFilter('Estado', 'fa-map-pin', 'blue', uf.map(v => [v, getEstadoLabel(v)]), mineradorasFiltros.uf, 'mineradoras', 'uf')}
-      ${buildAccordionFilter('Minério', 'fa-gem', 'purple', minerio.map(v => [v, v]), mineradorasFiltros.minerio, 'mineradoras', 'minerio')}
+      ${buildAccordionFilter('Mineral', 'fa-gem', 'purple', minerio.map(v => [v, v]), mineradorasFiltros.minerio, 'mineradoras', 'minerio')}
+      ${buildAccordionFilter('Barragens', 'fa-water', 'blue', barragem.map(v => [v, v]), mineradorasFiltros.barragem, 'mineradoras', 'barragem')}
       ${buildAccordionFilter('CRI', 'fa-triangle-exclamation', 'red', cri.map(v => [v, v]), mineradorasFiltros.cri, 'mineradoras', 'cri')}
       ${buildAccordionFilter('DPA', 'fa-shield-halved', 'yellow', dpa.map(v => [v, v]), mineradorasFiltros.dpa, 'mineradoras', 'dpa')}
       ${buildAccordionFilter('Emergência', 'fa-bell', 'amber', emergencia.map(v => [v, v]), mineradorasFiltros.emergencia, 'mineradoras', 'emergencia')}
@@ -615,11 +676,11 @@ function toggleFilter(scope, key, value) {
 
 function resetFilters(scope) {
   if (scope === 'pmrr') {
-    pmrrFiltros = { estados: [], status: [], tipos: [], porte: [], pib: [], barragem: [] };
+    pmrrFiltros = { estados: [], status: [], tipos: [], porte: [], pib: [], barragem: [], pessoasRisco: [] };
     pmrrPagina = 1;
     applyPMRRFilters();
   } else {
-    mineradorasFiltros = { uf: [], minerio: [], cri: [], dpa: [], emergencia: [] };
+    mineradorasFiltros = { uf: [], minerio: [], barragem: [], cri: [], dpa: [], emergencia: [] };
     mineradorasPagina = 1;
     applyMineradorasFilters();
   }
@@ -663,16 +724,18 @@ function applyPMRRFilters() {
   pmrrFiltrados = municipios.filter(m => {
     const normalizedStatus = normalizePMRRStatus(m.status_pmrr || 'SEM REGISTRO');
     const normalizedRisk = normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado');
-    const matchBusca = !pmrrBusca || [m.nome, m.uf, getEstadoLabel(m.uf), normalizedRisk, normalizedStatus].some(v => normalizeText(v).includes(normalizeText(pmrrBusca)));
+    const riscoFaixa = getPessoasRiscoFaixa(m.pessoas_em_risco);
+    const matchBusca = !pmrrBusca || [m.nome, m.uf, getEstadoLabel(m.uf), normalizedRisk, normalizedStatus, riscoFaixa].some(v => normalizeText(v).includes(normalizeText(pmrrBusca)));
     const matchEstado = pmrrFiltros.estados.length === 0 || pmrrFiltros.estados.includes(m.uf);
     const matchStatus = pmrrFiltros.status.length === 0 || pmrrFiltros.status.includes(normalizedStatus);
     const matchTipo = pmrrFiltros.tipos.length === 0 || pmrrFiltros.tipos.includes(normalizedRisk);
+    const matchPessoasRisco = pmrrFiltros.pessoasRisco.length === 0 || pmrrFiltros.pessoasRisco.includes(riscoFaixa);
     const matchPorte = pmrrFiltros.porte.length === 0 || pmrrFiltros.porte.includes(m.porte || 'Não informado');
     const matchPib = pmrrFiltros.pib.length === 0 || pmrrFiltros.pib.includes(getPibFaixa(m.pib_per_capita));
     const matchBarragem = pmrrFiltros.barragem.length === 0 ||
       (pmrrFiltros.barragem.includes('sim') && m.tem_barragens) ||
       (pmrrFiltros.barragem.includes('nao') && !m.tem_barragens);
-    return matchBusca && matchEstado && matchStatus && matchTipo && matchPorte && matchPib && matchBarragem;
+    return matchBusca && matchEstado && matchStatus && matchTipo && matchPessoasRisco && matchPorte && matchPib && matchBarragem;
   });
   sortPMRR();
   updatePMRR();
@@ -680,13 +743,19 @@ function applyPMRRFilters() {
 
 function applyMineradorasFilters() {
   mineradorasFiltradas = mineradoras.filter(m => {
-    const matchBusca = !mineradorasBusca || [m.empresa, m.operacao, m.uf, getEstadoLabel(m.uf), m.minerio_referencia, m.municipio].some(v => normalizeText(v).includes(normalizeText(mineradorasBusca)));
+    const mineral = normalizeMinerioGroup(m.minerio_referencia);
+    const cri = normalizeSeverityLabel(m.cri_max);
+    const dpa = normalizeSeverityLabel(m.dpa_max);
+    const emergencia = normalizeEmergencyLabel(m.nivel_emergencia);
+    const barragem = normalizeBarragemPresence(m.barragens_ativas);
+    const matchBusca = !mineradorasBusca || [m.empresa, m.operacao, m.uf, getEstadoLabel(m.uf), mineral, m.municipio, barragem, cri, dpa, emergencia].some(v => normalizeText(v).includes(normalizeText(mineradorasBusca)));
     const matchUF = mineradorasFiltros.uf.length === 0 || mineradorasFiltros.uf.includes(m.uf);
-    const matchMinerio = mineradorasFiltros.minerio.length === 0 || mineradorasFiltros.minerio.includes(m.minerio_referencia || 'Não informado');
-    const matchCri = mineradorasFiltros.cri.length === 0 || mineradorasFiltros.cri.includes(m.cri_max || 'Não informado');
-    const matchDpa = mineradorasFiltros.dpa.length === 0 || mineradorasFiltros.dpa.includes(m.dpa_max || 'Não informado');
-    const matchEmerg = mineradorasFiltros.emergencia.length === 0 || mineradorasFiltros.emergencia.includes(m.nivel_emergencia || 'Sem informação');
-    return matchBusca && matchUF && matchMinerio && matchCri && matchDpa && matchEmerg;
+    const matchMinerio = mineradorasFiltros.minerio.length === 0 || mineradorasFiltros.minerio.includes(mineral);
+    const matchBarragem = mineradorasFiltros.barragem.length === 0 || mineradorasFiltros.barragem.includes(barragem);
+    const matchCri = mineradorasFiltros.cri.length === 0 || mineradorasFiltros.cri.includes(cri);
+    const matchDpa = mineradorasFiltros.dpa.length === 0 || mineradorasFiltros.dpa.includes(dpa);
+    const matchEmerg = mineradorasFiltros.emergencia.length === 0 || mineradorasFiltros.emergencia.includes(emergencia);
+    return matchBusca && matchUF && matchMinerio && matchBarragem && matchCri && matchDpa && matchEmerg;
   });
   sortMineradoras();
   updateMineradoras();
@@ -793,8 +862,8 @@ function updateMineradoras() {
 }
 
 function renderMineradorasCharts() {
-  const ufData = topCounts(mineradorasFiltradas, m => m.uf, 8);
-  const mineralData = topCounts(mineradorasFiltradas, m => m.minerio_referencia || 'Não informado', 8);
+  const ufData = topCounts(mineradorasFiltradas, m => getEstadoLabel(m.uf), 8);
+  const mineralData = topCounts(mineradorasFiltradas, m => normalizeMinerioGroup(m.minerio_referencia), 8);
   if (chartMineradorasUF) chartMineradorasUF.destroy();
   if (chartMineradorasMinerio) chartMineradorasMinerio.destroy();
   chartMineradorasUF = new Chart(document.getElementById('graficoMineradorasUF'), {
@@ -868,7 +937,7 @@ function buildGlobalSearchResults(query) {
   const minResults = mineradoras.filter(m => [m.empresa, m.operacao, m.municipio, getEstadoLabel(m.uf), m.minerio_referencia].some(v => normalizeText(v).includes(q))).slice(0, 4).map(m => ({
     kind: 'mineradoras',
     title: `${m.operacao || m.empresa} · ${getEstadoLabel(m.uf)}`,
-    subtitle: `${m.empresa} · ${m.minerio_referencia || 'Minério não informado'}`,
+    subtitle: `${m.empresa} · ${normalizeMinerioGroup(m.minerio_referencia)}`,
     id: getCRMIdFromMineradora(m)
   }));
   return [...pmrrResults, ...minResults].slice(0, 8);
