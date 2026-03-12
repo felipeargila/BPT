@@ -26,7 +26,10 @@
     .bg-soft-blue { background:#dbeafe; color:#1d4ed8; }
     .bg-soft-red { background:#fee2e2; color:#b91c1c; }
     .tab-btn.active { background:#facc15; color:#1e3a8a; }
-    .kanban-col { min-height: 520px; }
+    .kanban-col { min-height: 520px; min-width: 280px; flex: 0 0 280px; }
+    .crm-scroll { overflow-x:auto; padding-bottom:8px; }
+    .crm-row { display:flex; gap:1rem; min-width:max-content; }
+    .archive-card { border:1px solid #e5e7eb; border-radius:1rem; background:#fff; padding:1rem; }
     .crm-card.dragging { opacity: .45; }
     .kanban-dropzone.drag-over { outline: 2px dashed #2563eb; outline-offset: -6px; background: #eff6ff; }
     textarea.notes-area { resize: vertical; min-height: 76px; }
@@ -48,21 +51,19 @@
 <body class="bg-gray-50">
   <div class="bg-blue-900 border-b border-blue-800 sticky top-0 z-20 shadow-lg">
     <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
-      <div class="flex flex-col gap-4 py-5">
-        <div class="flex justify-between items-center">
-          <div class="flex items-center">
-            <img src="https://braspowertech.com.br/wp-content/uploads/2023/01/bpt-selo-header_Prancheta-1-1.svg" alt="Braspowertech" class="h-14 w-auto">
-            <div class="ml-4">
-              <div class="text-white text-xl font-bold">BPT Intelligence</div>
-              <div class="text-blue-200 text-sm">Radar analítico + execução comercial</div>
-            </div>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5 py-5">
+        <div class="flex items-center">
+          <img src="https://braspowertech.com.br/wp-content/uploads/2023/01/bpt-selo-header_Prancheta-1-1.svg" alt="Braspowertech" class="h-24 md:h-28 w-auto">
+          <div class="ml-5">
+            <div class="text-white text-2xl md:text-3xl font-bold leading-tight">BPT Intelligence</div>
+            <div class="text-blue-200 text-sm md:text-base mt-1">Ferramenta de Expansão Comercial</div>
           </div>
-          <div class="text-yellow-300 text-sm hidden md:block" id="headerContext">PMRR · Base territorial</div>
         </div>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 md:justify-end">
           <button class="tab-btn active px-4 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-100 transition" data-tab="pmrr">PMRR</button>
           <button class="tab-btn px-4 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-100 transition" data-tab="mineradoras">Mineradoras</button>
           <button class="tab-btn px-4 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-100 transition" data-tab="crm">CRM</button>
+          <button class="tab-btn px-4 py-2 rounded-full text-sm font-bold bg-blue-800 text-blue-100 transition" data-tab="arquivados">Arquivados</button>
         </div>
       </div>
     </div>
@@ -81,7 +82,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 min-h-[50px]" id="container-chips"></div>
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <div class="flex flex-col lg:flex-row gap-6">
+    <div id="mainLayout" class="flex flex-col lg:flex-row gap-6">
       <aside id="sidebarArea" class="lg:w-80 lg:sticky lg:top-32 space-y-4" style="max-height: calc(100vh - 140px); overflow-y: auto;"></aside>
 
       <main class="flex-1 min-w-0">
@@ -169,21 +170,38 @@
         </section>
 
         <section id="section-crm" class="hidden">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
             <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Cards no pipeline</div><div class="text-2xl font-bold text-gray-900" id="crm-total">0</div></div>
             <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Origem PMRR</div><div class="text-2xl font-bold text-blue-700" id="crm-pmrr">0</div></div>
             <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Origem Mineradoras</div><div class="text-2xl font-bold text-red-700" id="crm-mineradoras">0</div></div>
+            <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Negócios perdidos</div><div class="text-2xl font-bold text-rose-700" id="crm-perdidos">0</div></div>
+            <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Negócios efetivados</div><div class="text-2xl font-bold text-emerald-700" id="crm-efetivados">0</div></div>
           </div>
           <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center gap-4">
               <div>
                 <h3 class="font-semibold text-gray-900">CRM operacional</h3>
-                <p class="text-sm text-gray-500">Arraste os cards entre as colunas e registre observações comerciais.</p>
+                <p class="text-sm text-gray-500">Arraste os cards entre as colunas, registre observações e arquive quando necessário.</p>
               </div>
               <button id="limparCRM" class="text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700">Limpar CRM</button>
             </div>
           </div>
-          <div id="crmBoard" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4"></div>
+          <div class="crm-scroll"><div id="crmBoard" class="crm-row"></div></div>
+        </section>
+
+        <section id="section-arquivados" class="hidden">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Cards arquivados</div><div class="text-2xl font-bold text-gray-900" id="archive-total">0</div></div>
+            <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Arquivados de PMRR</div><div class="text-2xl font-bold text-blue-700" id="archive-pmrr">0</div></div>
+            <div class="bg-white rounded-xl shadow-sm p-4"><div class="text-xs text-gray-500 mb-1">Arquivados de Mineradoras</div><div class="text-2xl font-bold text-red-700" id="archive-mineradoras">0</div></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex items-center justify-between gap-4">
+            <div>
+              <h3 class="font-semibold text-gray-900">Arquivados</h3>
+              <p class="text-sm text-gray-500">Visualize, restaure ou exclua cards arquivados.</p>
+            </div>
+          </div>
+          <div id="archiveList" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
         </section>
       </main>
     </div>
@@ -251,11 +269,11 @@ function getEstadoLabel(uf) {
 function normalizePMRRStatus(status) {
   const s = normalizeText(status);
   if (!s || s.includes('sem registro')) return 'Sem PMRR';
-  if (s.includes('executado')) return 'Executado';
-  if (s.includes('campo')) return 'Em campo';
-  if (s.includes('conclu') || s.includes('mapeamento')) return 'Concluído';
   if (s.includes('nao identificado')) return 'Não identificado';
-  return (status || 'Sem PMRR').toString().trim();
+  if (s.includes('disponivel') || s.includes('conclu') || s.includes('finalizado') || s.includes('executado') || s.includes('mapeamento')) return 'Concluído';
+  if (s.includes('campo') || s.includes('andamento')) return 'Em andamento';
+  if (s.includes('elabor')) return 'Em elaboração';
+  return 'Sem PMRR';
 }
 
 function normalizePMRRRisk(tipo) {
@@ -430,14 +448,14 @@ function buildFilterSummary(title, count) {
 
 function loadCRM() {
   try {
-    crmCards = JSON.parse(localStorage.getItem('bpt-intelligence-crm-v1') || '[]');
+    crmCards = JSON.parse(localStorage.getItem('bpt-intelligence-crm-v2') || '[]');
   } catch (e) {
     crmCards = [];
   }
 }
 
 function saveCRM() {
-  localStorage.setItem('bpt-intelligence-crm-v1', JSON.stringify(crmCards));
+  localStorage.setItem('bpt-intelligence-crm-v2', JSON.stringify(crmCards));
   renderCRM();
 }
 
@@ -492,6 +510,23 @@ function removeCRMCard(id) {
   saveCRM();
 }
 
+function archiveCRMCard(id) {
+  const card = crmCards.find(c => c.id === id);
+  if (!card) return;
+  card.arquivado = true;
+  card.arquivadoEm = new Date().toISOString();
+  saveCRM();
+}
+
+function restoreCRMCard(id) {
+  const card = crmCards.find(c => c.id === id);
+  if (!card) return;
+  card.arquivado = false;
+  delete card.arquivadoEm;
+  if (!card.coluna) card.coluna = 'ALVO';
+  saveCRM();
+}
+
 function updateCRMNotes(id, value) {
   const card = crmCards.find(c => c.id === id);
   if (!card) return;
@@ -503,6 +538,7 @@ function moveCRMCard(id, coluna) {
   const card = crmCards.find(c => c.id === id);
   if (!card) return;
   card.coluna = coluna;
+  card.arquivado = false;
   saveCRM();
 }
 
@@ -513,12 +549,15 @@ function clearCRM() {
 
 function renderCRM() {
   const board = document.getElementById('crmBoard');
-  document.getElementById('crm-total').textContent = formatNumber(crmCards.length);
-  document.getElementById('crm-pmrr').textContent = formatNumber(crmCards.filter(c => c.origem === 'PMRR').length);
-  document.getElementById('crm-mineradoras').textContent = formatNumber(crmCards.filter(c => c.origem === 'MINERADORAS').length);
+  const ativos = crmCards.filter(c => !c.arquivado);
+  document.getElementById('crm-total').textContent = formatNumber(ativos.length);
+  document.getElementById('crm-pmrr').textContent = formatNumber(ativos.filter(c => c.origem === 'PMRR').length);
+  document.getElementById('crm-mineradoras').textContent = formatNumber(ativos.filter(c => c.origem === 'MINERADORAS').length);
+  document.getElementById('crm-perdidos').textContent = formatNumber(ativos.filter(c => c.coluna === 'N. PERDIDO').length);
+  document.getElementById('crm-efetivados').textContent = formatNumber(ativos.filter(c => c.coluna === 'N. EFETIVADO').length);
 
   board.innerHTML = CRM_COLUMNS.map(col => {
-    const cards = crmCards.filter(c => c.coluna === col);
+    const cards = ativos.filter(c => c.coluna === col);
     return `
       <div class="kanban-col kanban-dropzone bg-white rounded-xl shadow-sm p-3 border border-gray-200" data-col="${col}">
         <div class="flex items-center justify-between mb-3">
@@ -541,9 +580,12 @@ function renderCRM() {
               <div class="text-xs text-gray-600 space-y-1 mb-3">
                 ${card.origem === 'PMRR'
                   ? `<div>Status: <strong>${normalizePMRRStatus(card.meta.status)}</strong></div><div>Pessoas em risco: <strong>${formatNumber(card.meta.pessoasEmRisco)}</strong></div><div>Barragens: <strong>${formatNumber(card.meta.barragens)}</strong></div>`
-                  : `<div>Minério: <strong>${card.meta.minerio || 'Não informado'}</strong></div><div>Barragens ativas: <strong>${formatNumber(card.meta.barragens)}</strong></div><div>Emergência: <strong>${card.meta.emergencia}</strong></div>`}
+                  : `<div>Mineral: <strong>${normalizeMinerioGroup(card.meta.minerio) || 'Não informado'}</strong></div><div>Barragens ativas: <strong>${formatNumber(card.meta.barragens)}</strong></div><div>Emergência: <strong>${normalizeEmergencyLabel(card.meta.emergencia)}</strong></div>`}
               </div>
               <textarea class="notes-area w-full text-xs border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Observações comerciais..." oninput="updateCRMNotes('${card.id.replace(/'/g, "\'")}', this.value)">${card.observacoes || ''}</textarea>
+              <div class="flex gap-2 mt-3">
+                <button onclick="archiveCRMCard('${card.id.replace(/'/g, "\'")}')" class="flex-1 text-xs px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium">Arquivar</button>
+              </div>
             </div>
           `).join('')}
         </div>
@@ -577,18 +619,35 @@ function renderCRM() {
   });
 }
 
+function renderArquivados() {
+  const archived = crmCards.filter(c => c.arquivado);
+  document.getElementById('archive-total').textContent = formatNumber(archived.length);
+  document.getElementById('archive-pmrr').textContent = formatNumber(archived.filter(c => c.origem === 'PMRR').length);
+  document.getElementById('archive-mineradoras').textContent = formatNumber(archived.filter(c => c.origem === 'MINERADORAS').length);
+  const list = document.getElementById('archiveList');
+  list.innerHTML = archived.length ? archived.map(card => `
+    <div class="archive-card shadow-sm">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <div class="font-semibold text-gray-900">${card.titulo}</div>
+          <div class="text-sm text-gray-500 mt-1">${card.subtitulo}</div>
+        </div>
+        <span class="badge bg-soft-gray">${card.origem}</span>
+      </div>
+      <div class="text-xs text-gray-600 mb-3">Arquivado em ${new Date(card.arquivadoEm || Date.now()).toLocaleDateString('pt-BR')}</div>
+      <div class="text-sm text-gray-700 mb-3">${card.observacoes ? card.observacoes.replace(/</g,'&lt;') : 'Sem observações registradas.'}</div>
+      <div class="flex gap-2">
+        <button onclick="restoreCRMCard('${card.id.replace(/'/g, "\'")}')" class="flex-1 text-sm px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium">Restaurar</button>
+        <button onclick="removeCRMCard('${card.id.replace(/'/g, "\'")}')" class="text-sm px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700">Excluir</button>
+      </div>
+    </div>
+  `).join('') : '<div class="bg-white rounded-xl shadow-sm p-6 text-sm text-gray-500">Nenhum card arquivado ainda.</div>';
+}
+
 function renderSidebar() {
   const sidebar = document.getElementById('sidebarArea');
-  if (activeTab === 'crm') {
-    sidebar.innerHTML = `
-      <div class="filtro-card">
-        <div class="filtro-header"><span><i class="fas fa-info-circle mr-2 text-blue-500"></i>CRM</span></div>
-        <div class="filtro-content text-sm text-gray-600 space-y-3">
-          <p>Os cards chegam ao CRM pelas abas PMRR e Mineradoras.</p>
-          <p>O pipeline fica salvo no navegador via <strong>localStorage</strong>.</p>
-          <p>Use o arrastar e soltar para mover os cards entre as etapas e registre observações diretamente em cada card.</p>
-        </div>
-      </div>`;
+  if (activeTab === 'crm' || activeTab === 'arquivados') {
+    sidebar.innerHTML = '';
     return;
   }
 
@@ -603,7 +662,7 @@ function renderSidebar() {
       ${buildAccordionFilter('Estado', 'fa-map-pin', 'blue', estados.map(v => [v, getEstadoLabel(v)]), pmrrFiltros.estados, 'pmrr', 'estados')}
       ${buildAccordionFilter('Status PMRR', 'fa-tag', 'purple', status.map(v => [v, v]), pmrrFiltros.status, 'pmrr', 'status')}
       ${buildAccordionFilter('Tipo de risco', 'fa-cloud-rain', 'blue', tipos.map(v => [v, v]), pmrrFiltros.tipos, 'pmrr', 'tipos')}
-      ${buildAccordionFilter('Pessoas em risco', 'fa-people-group', 'red', pessoasRisco.map(v => [v, v]), pmrrFiltros.pessoasRisco, 'pmrr', 'pessoasRisco')}
+      ${buildAccordionFilter('Pessoas em risco', 'fa-users-viewfinder', 'red', pessoasRisco.map(v => [v, v]), pmrrFiltros.pessoasRisco, 'pmrr', 'pessoasRisco')}
       ${buildAccordionFilter('Porte populacional', 'fa-users', 'green', porte.map(v => [v, v]), pmrrFiltros.porte, 'pmrr', 'porte')}
       ${buildAccordionFilter('PIB per capita', 'fa-chart-line', 'emerald', pib.map(v => [v, v]), pmrrFiltros.pib, 'pmrr', 'pib')}
       ${buildAccordionFilter('Barragens', 'fa-water', 'blue', [['sim', 'Com barragens'], ['nao', 'Sem barragens']], pmrrFiltros.barragem, 'pmrr', 'barragem')}
@@ -623,7 +682,7 @@ function renderSidebar() {
       ${buildAccordionFilter('Mineral', 'fa-gem', 'purple', minerio.map(v => [v, v]), mineradorasFiltros.minerio, 'mineradoras', 'minerio')}
       ${buildAccordionFilter('Barragens', 'fa-water', 'blue', barragem.map(v => [v, v]), mineradorasFiltros.barragem, 'mineradoras', 'barragem')}
       ${buildAccordionFilter('CRI', 'fa-triangle-exclamation', 'red', cri.map(v => [v, v]), mineradorasFiltros.cri, 'mineradoras', 'cri')}
-      ${buildAccordionFilter('DPA', 'fa-shield-halved', 'yellow', dpa.map(v => [v, v]), mineradorasFiltros.dpa, 'mineradoras', 'dpa')}
+      ${buildAccordionFilter('DPA', 'fa-house-damage', 'yellow', dpa.map(v => [v, v]), mineradorasFiltros.dpa, 'mineradoras', 'dpa')}
       ${buildAccordionFilter('Emergência', 'fa-bell', 'amber', emergencia.map(v => [v, v]), mineradorasFiltros.emergencia, 'mineradoras', 'emergencia')}
       <div class="flex gap-3 mt-4">
         <button onclick="resetFilters('mineradoras')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar filtros</button>
@@ -988,22 +1047,20 @@ function renderApp() {
   document.getElementById('section-pmrr').classList.toggle('hidden', activeTab !== 'pmrr');
   document.getElementById('section-mineradoras').classList.toggle('hidden', activeTab !== 'mineradoras');
   document.getElementById('section-crm').classList.toggle('hidden', activeTab !== 'crm');
-  document.getElementById('toolbarBusca').classList.toggle('hidden', activeTab === 'crm');
-  const headerContext = document.getElementById('headerContext');
-  if (activeTab === 'pmrr') {
-    headerContext.textContent = 'PMRR · Base territorial';
-    document.getElementById('searchInput').placeholder = 'Buscar em toda a plataforma ou filtre na aba ativa...';
-  } else if (activeTab === 'mineradoras') {
-    headerContext.textContent = 'Mineradoras · Prioridade máxima';
-    document.getElementById('searchInput').placeholder = 'Buscar em toda a plataforma ou filtre na aba ativa...';
-  } else {
-    headerContext.textContent = 'CRM · Execução comercial';
-  }
+  document.getElementById('section-arquivados').classList.toggle('hidden', activeTab !== 'arquivados');
+  document.getElementById('toolbarBusca').classList.toggle('hidden', activeTab === 'crm' || activeTab === 'arquivados');
   renderSidebar();
   renderChips();
+  const sidebar = document.getElementById('sidebarArea');
+  const mainLayout = document.getElementById('mainLayout');
+  const hideSidebar = activeTab === 'crm' || activeTab === 'arquivados';
+  sidebar.classList.toggle('hidden', hideSidebar);
+  mainLayout.classList.toggle('lg:flex-row', !hideSidebar);
+  mainLayout.classList.toggle('block', hideSidebar);
   if (activeTab === 'pmrr') updatePMRR();
   else if (activeTab === 'mineradoras') updateMineradoras();
-  else renderCRM();
+  else if (activeTab === 'crm') renderCRM();
+  else renderArquivados();
 }
 
 document.addEventListener('click', function(e) {
