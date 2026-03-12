@@ -30,6 +30,19 @@
     .crm-card.dragging { opacity: .45; }
     .kanban-dropzone.drag-over { outline: 2px dashed #2563eb; outline-offset: -6px; background: #eff6ff; }
     textarea.notes-area { resize: vertical; min-height: 76px; }
+    details.filter-accordion summary { list-style: none; }
+    details.filter-accordion summary::-webkit-details-marker { display:none; }
+    .filter-summary { padding:0.85rem 1rem; background:#f9fafb; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; color:#111827; }
+    .filter-summary:hover { background:#f3f4f6; }
+    .filter-summary .meta { color:#6b7280; font-size:12px; font-weight:500; }
+    .filter-panel { padding:0 1rem 1rem; border-top:1px solid #e5e7eb; }
+    .tag-chip { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; padding:4px 8px; border-radius:999px; }
+    .tag-pmrr { background:#e0f2fe; color:#075985; }
+    .tag-min { background:#fee2e2; color:#991b1b; }
+    .tag-neutral { background:#f3f4f6; color:#374151; }
+    .search-suggestion { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 14px; cursor:pointer; }
+    .search-suggestion:hover { background:#f9fafb; }
+    .search-suggestion + .search-suggestion { border-top:1px solid #f3f4f6; }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -58,8 +71,9 @@
   <div class="bg-white border-b border-gray-200" id="toolbarBusca">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
       <div class="relative">
-        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="Buscar..." id="searchInput" class="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+        <input type="text" placeholder="Buscar..." id="searchInput" class="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" autocomplete="off">
+        <div id="searchSuggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-30 overflow-hidden"></div>
       </div>
     </div>
   </div>
@@ -230,6 +244,33 @@ function normalizeText(value) {
   return (value || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
+function getEstadoLabel(uf) {
+  return `${estadosBrasil[uf] || uf} (${uf})`;
+}
+
+function normalizePMRRStatus(status) {
+  const s = normalizeText(status);
+  if (!s || s.includes('sem registro')) return 'Sem PMRR';
+  if (s.includes('executado')) return 'Executado';
+  if (s.includes('campo')) return 'Em campo';
+  if (s.includes('conclu') || s.includes('mapeamento')) return 'Concluído';
+  if (s.includes('nao identificado')) return 'Não identificado';
+  return (status || 'Sem PMRR').toString().trim();
+}
+
+function normalizePMRRRisk(tipo) {
+  const t = normalizeText(tipo);
+  const hasInund = t.includes('inund');
+  const hasEnx = t.includes('enxurr');
+  const hasDesl = t.includes('desliz') || t.includes('movimento de massa');
+  const hasErosao = t.includes('eros');
+  if ((hasInund || hasEnx) && hasDesl) return 'Inundação + Deslizamento';
+  if (hasInund || hasEnx) return 'Inundação';
+  if (hasDesl) return 'Deslizamento';
+  if (hasErosao) return 'Erosão';
+  return (tipo || 'Não informado').toString().trim();
+}
+
 function getPibFaixa(v) {
   const n = Number(v || 0);
   if (n < 3000) return 'até 3k';
@@ -239,19 +280,20 @@ function getPibFaixa(v) {
 }
 
 function badgeForPMRR(status) {
-  const s = (status || 'SEM REGISTRO').toUpperCase();
-  if (s.includes('EXECUTADO') || s.includes('CONCLU')) return '<span class="badge bg-soft-green">Executado</span>';
-  if (s.includes('CAMPO')) return '<span class="badge bg-soft-yellow">Em campo</span>';
-  if (s.includes('MAPEAMENTO')) return '<span class="badge bg-soft-blue">Concluído</span>';
-  if (s.includes('NÃO IDENTIFICADO')) return '<span class="badge bg-soft-gray">Não identificado</span>';
-  return '<span class="badge bg-soft-gray">Sem registro</span>';
+  const label = normalizePMRRStatus(status);
+  if (label === 'Executado') return '<span class="badge bg-soft-green">Executado</span>';
+  if (label === 'Em campo') return '<span class="badge bg-soft-yellow">Em campo</span>';
+  if (label === 'Concluído') return '<span class="badge bg-soft-blue">Concluído</span>';
+  if (label === 'Não identificado') return '<span class="badge bg-soft-gray">Não identificado</span>';
+  return '<span class="badge bg-soft-gray">Sem PMRR</span>';
 }
 
 function badgeForRiskType(tipo) {
-  const text = tipo || 'Não informado';
-  if (text.includes('Deslizamento') && text.includes('Inundação')) return '<span class="badge bg-soft-red">' + text + '</span>';
-  if (text.includes('Inundação')) return '<span class="badge bg-soft-blue">' + text + '</span>';
-  if (text.includes('Enxurrada')) return '<span class="badge bg-soft-yellow">' + text + '</span>';
+  const text = normalizePMRRRisk(tipo);
+  if (text === 'Inundação + Deslizamento') return '<span class="badge bg-soft-red">' + text + '</span>';
+  if (text === 'Inundação') return '<span class="badge bg-soft-blue">' + text + '</span>';
+  if (text === 'Deslizamento') return '<span class="badge bg-soft-yellow">' + text + '</span>';
+  if (text === 'Erosão') return '<span class="badge bg-soft-purple">' + text + '</span>';
   return '<span class="badge bg-soft-gray">' + text + '</span>';
 }
 
@@ -302,6 +344,31 @@ function getCRMIdFromPMRR(m) {
 
 function getCRMIdFromMineradora(m) {
   return `MINERADORAS|${m.empresa}|${m.operacao}|${m.uf}`;
+}
+
+function getPMRRTags(item) {
+  const tags = [
+    `<span class="tag-chip tag-pmrr">PMRR</span>`,
+    `<span class="tag-chip tag-neutral">${getEstadoLabel(item.uf)}</span>`,
+    `<span class="tag-chip tag-neutral">${normalizePMRRRisk(item.tipo_risco_padronizado || item.tipo_risco)}</span>`
+  ];
+  if (item.tem_barragens) tags.push('<span class="tag-chip tag-neutral">Com barragens</span>');
+  return tags.join('');
+}
+
+function getMineradoraTags(item) {
+  const tags = [
+    '<span class="tag-chip tag-min">Mineradora</span>',
+    `<span class="tag-chip tag-neutral">${getEstadoLabel(item.uf)}</span>`
+  ];
+  if (item.minerio_referencia) tags.push(`<span class="tag-chip tag-neutral">${item.minerio_referencia}</span>`);
+  if ((item.barragens_ativas || 0) > 0) tags.push(`<span class="tag-chip tag-neutral">${item.barragens_ativas} barragem(ns)</span>`);
+  if (normalizeText(item.nivel_emergencia).includes('nivel')) tags.push(`<span class="tag-chip tag-neutral">${item.nivel_emergencia}</span>`);
+  return tags.join('');
+}
+
+function buildFilterSummary(title, count) {
+  return `${title}${count ? ` (${count})` : ''}`;
 }
 
 function loadCRM() {
@@ -409,19 +476,17 @@ function renderCRM() {
                   <div class="font-semibold text-sm text-gray-900">${card.titulo}</div>
                   <div class="text-xs text-gray-500 mt-1">${card.subtitulo}</div>
                 </div>
-                <button onclick="removeCRMCard('${card.id.replace(/'/g, "\\'")}')" class="text-gray-400 hover:text-red-600">
+                <button onclick="removeCRMCard('${card.id.replace(/'/g, "\'")}')" class="text-gray-400 hover:text-red-600">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
-              <div class="mb-2">
-                <span class="badge ${card.origem === 'PMRR' ? 'bg-soft-blue' : 'bg-soft-red'}">${card.origem}</span>
-              </div>
+              <div class="flex flex-wrap gap-2 mb-3">${card.tags || ''}</div>
               <div class="text-xs text-gray-600 space-y-1 mb-3">
                 ${card.origem === 'PMRR'
-                  ? `<div>Status: <strong>${card.meta.status}</strong></div><div>Pessoas em risco: <strong>${formatNumber(card.meta.pessoasEmRisco)}</strong></div><div>Barragens: <strong>${formatNumber(card.meta.barragens)}</strong></div>`
+                  ? `<div>Status: <strong>${normalizePMRRStatus(card.meta.status)}</strong></div><div>Pessoas em risco: <strong>${formatNumber(card.meta.pessoasEmRisco)}</strong></div><div>Barragens: <strong>${formatNumber(card.meta.barragens)}</strong></div>`
                   : `<div>Minério: <strong>${card.meta.minerio || 'Não informado'}</strong></div><div>Barragens ativas: <strong>${formatNumber(card.meta.barragens)}</strong></div><div>Emergência: <strong>${card.meta.emergencia}</strong></div>`}
               </div>
-              <textarea class="notes-area w-full text-xs border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Observações comerciais..." oninput="updateCRMNotes('${card.id.replace(/'/g, "\\'")}', this.value)">${card.observacoes || ''}</textarea>
+              <textarea class="notes-area w-full text-xs border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Observações comerciais..." oninput="updateCRMNotes('${card.id.replace(/'/g, "\'")}', this.value)">${card.observacoes || ''}</textarea>
             </div>
           `).join('')}
         </div>
@@ -472,19 +537,19 @@ function renderSidebar() {
 
   if (activeTab === 'pmrr') {
     const estados = [...new Set(municipios.map(m => m.uf))].sort();
-    const status = [...new Set(municipios.map(m => m.status_pmrr || 'SEM REGISTRO'))].sort();
+    const status = [...new Set(municipios.map(m => normalizePMRRStatus(m.status_pmrr || 'SEM REGISTRO')))].sort();
     const porte = [...new Set(municipios.map(m => m.porte || 'Não informado'))].sort();
-    const tipos = [...new Set(municipios.map(m => m.tipo_risco_padronizado || m.tipo_risco || 'Não informado'))].sort();
+    const tipos = [...new Set(municipios.map(m => normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado')))].sort();
     const pib = ['até 3k','3k-6k','6k-10k','+10k'];
     sidebar.innerHTML = `
-      ${buildCheckboxCard('Estado', 'fa-map-pin', 'blue', estados.map(v => [v, `${v} · ${estadosBrasil[v] || v}`]), pmrrFiltros.estados, 'pmrr', 'estados')}
-      ${buildCheckboxCard('Status PMRR', 'fa-tag', 'purple', status.map(v => [v, v]), pmrrFiltros.status, 'pmrr', 'status')}
-      ${buildCheckboxCard('Porte populacional', 'fa-users', 'green', porte.map(v => [v, v]), pmrrFiltros.porte, 'pmrr', 'porte')}
-      ${buildCheckboxCard('PIB per capita', 'fa-chart-line', 'emerald', pib.map(v => [v, v]), pmrrFiltros.pib, 'pmrr', 'pib')}
-      ${buildCheckboxCard('Barragens', 'fa-water', 'blue', [['sim', 'Com barragens'], ['nao', 'Sem barragens']], pmrrFiltros.barragem, 'pmrr', 'barragem')}
-      ${buildCheckboxCard('Tipo de risco', 'fa-cloud-rain', 'blue', tipos.map(v => [v, v]), pmrrFiltros.tipos, 'pmrr', 'tipos')}
+      ${buildAccordionFilter('Estado', 'fa-map-pin', 'blue', estados.map(v => [v, getEstadoLabel(v)]), pmrrFiltros.estados, 'pmrr', 'estados')}
+      ${buildAccordionFilter('Status PMRR', 'fa-tag', 'purple', status.map(v => [v, v]), pmrrFiltros.status, 'pmrr', 'status')}
+      ${buildAccordionFilter('Porte populacional', 'fa-users', 'green', porte.map(v => [v, v]), pmrrFiltros.porte, 'pmrr', 'porte')}
+      ${buildAccordionFilter('PIB per capita', 'fa-chart-line', 'emerald', pib.map(v => [v, v]), pmrrFiltros.pib, 'pmrr', 'pib')}
+      ${buildAccordionFilter('Barragens', 'fa-water', 'blue', [['sim', 'Com barragens'], ['nao', 'Sem barragens']], pmrrFiltros.barragem, 'pmrr', 'barragem')}
+      ${buildAccordionFilter('Tipo de risco', 'fa-cloud-rain', 'blue', tipos.map(v => [v, v]), pmrrFiltros.tipos, 'pmrr', 'tipos')}
       <div class="flex gap-3 mt-4">
-        <button onclick="resetFilters('pmrr')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar</button>
+        <button onclick="resetFilters('pmrr')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar filtros</button>
       </div>
     `;
   } else {
@@ -494,32 +559,38 @@ function renderSidebar() {
     const dpa = [...new Set(mineradoras.map(m => m.dpa_max || 'Não informado'))].sort();
     const emergencia = [...new Set(mineradoras.map(m => m.nivel_emergencia || 'Sem informação'))].sort();
     sidebar.innerHTML = `
-      ${buildCheckboxCard('Estado', 'fa-map-pin', 'blue', uf.map(v => [v, `${v} · ${estadosBrasil[v] || v}`]), mineradorasFiltros.uf, 'mineradoras', 'uf')}
-      ${buildCheckboxCard('Minério', 'fa-gem', 'purple', minerio.map(v => [v, v]), mineradorasFiltros.minerio, 'mineradoras', 'minerio')}
-      ${buildCheckboxCard('CRI', 'fa-triangle-exclamation', 'red', cri.map(v => [v, v]), mineradorasFiltros.cri, 'mineradoras', 'cri')}
-      ${buildCheckboxCard('DPA', 'fa-shield-halved', 'yellow', dpa.map(v => [v, v]), mineradorasFiltros.dpa, 'mineradoras', 'dpa')}
-      ${buildCheckboxCard('Emergência', 'fa-siren-on', 'amber', emergencia.map(v => [v, v]), mineradorasFiltros.emergencia, 'mineradoras', 'emergencia')}
+      ${buildAccordionFilter('Estado', 'fa-map-pin', 'blue', uf.map(v => [v, getEstadoLabel(v)]), mineradorasFiltros.uf, 'mineradoras', 'uf')}
+      ${buildAccordionFilter('Minério', 'fa-gem', 'purple', minerio.map(v => [v, v]), mineradorasFiltros.minerio, 'mineradoras', 'minerio')}
+      ${buildAccordionFilter('CRI', 'fa-triangle-exclamation', 'red', cri.map(v => [v, v]), mineradorasFiltros.cri, 'mineradoras', 'cri')}
+      ${buildAccordionFilter('DPA', 'fa-shield-halved', 'yellow', dpa.map(v => [v, v]), mineradorasFiltros.dpa, 'mineradoras', 'dpa')}
+      ${buildAccordionFilter('Emergência', 'fa-bell', 'amber', emergencia.map(v => [v, v]), mineradorasFiltros.emergencia, 'mineradoras', 'emergencia')}
       <div class="flex gap-3 mt-4">
-        <button onclick="resetFilters('mineradoras')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar</button>
+        <button onclick="resetFilters('mineradoras')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm py-3 rounded-lg transition font-medium">Limpar filtros</button>
       </div>
     `;
   }
 }
 
-function buildCheckboxCard(title, icon, color, entries, selected, scope, key) {
+function buildAccordionFilter(title, icon, color, entries, selected, scope, key) {
+  const count = selected.length;
   return `
     <div class="filtro-card">
-      <div class="filtro-header"><span><i class="fas ${icon} mr-2 text-${color}-500"></i>${title}</span></div>
-      <div class="filtro-content">
-        <div class="space-y-2">
-          ${entries.map(([value, label]) => `
-            <label class="flex items-center text-sm text-gray-700">
-              <input type="checkbox" class="filtro-checkbox" onchange="toggleFilter('${scope}','${key}', this.value)" value="${String(value).replace(/"/g, '&quot;')}" ${selected.includes(value) ? 'checked' : ''}>
-              <span>${label}</span>
-            </label>
-          `).join('')}
+      <details class="filter-accordion">
+        <summary class="filter-summary">
+          <span><i class="fas ${icon} mr-2 text-${color}-500"></i>${buildFilterSummary(title, count)}</span>
+          <span class="meta">${entries.length} opções <i class="fas fa-chevron-down ml-2"></i></span>
+        </summary>
+        <div class="filter-panel">
+          <div class="space-y-2 pt-3 max-h-72 overflow-y-auto">
+            ${entries.map(([value, label]) => `
+              <label class="flex items-center text-sm text-gray-700">
+                <input type="checkbox" class="filtro-checkbox" onchange="toggleFilter('${scope}','${key}', this.value)" value="${String(value).replace(/"/g, '&quot;')}" ${selected.includes(value) ? 'checked' : ''}>
+                <span>${label}</span>
+              </label>
+            `).join('')}
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   `;
 }
@@ -574,9 +645,14 @@ function renderChips() {
     });
   }
 
+  const formatChipLabel = chip => {
+    if (chip.key === 'estados' || chip.key === 'uf') return getEstadoLabel(chip.value);
+    return chip.value;
+  };
+
   container.innerHTML = chips.map(chip => `
-    <span class="chip">${chip.value}
-      <span class="chip-remover" onclick="toggleFilter('${chip.scope}','${chip.key}','${String(chip.value).replace(/'/g, "\\'")}')">
+    <span class="chip">${formatChipLabel(chip)}
+      <span class="chip-remover" onclick="toggleFilter('${chip.scope}','${chip.key}','${String(chip.value).replace(/'/g, "\'")}')">
         <i class="fas fa-times"></i>
       </span>
     </span>
@@ -585,10 +661,12 @@ function renderChips() {
 
 function applyPMRRFilters() {
   pmrrFiltrados = municipios.filter(m => {
-    const matchBusca = !pmrrBusca || [m.nome, m.uf, estadosBrasil[m.uf], m.tipo_risco_padronizado, m.status_pmrr].some(v => normalizeText(v).includes(normalizeText(pmrrBusca)));
+    const normalizedStatus = normalizePMRRStatus(m.status_pmrr || 'SEM REGISTRO');
+    const normalizedRisk = normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado');
+    const matchBusca = !pmrrBusca || [m.nome, m.uf, getEstadoLabel(m.uf), normalizedRisk, normalizedStatus].some(v => normalizeText(v).includes(normalizeText(pmrrBusca)));
     const matchEstado = pmrrFiltros.estados.length === 0 || pmrrFiltros.estados.includes(m.uf);
-    const matchStatus = pmrrFiltros.status.length === 0 || pmrrFiltros.status.includes(m.status_pmrr || 'SEM REGISTRO');
-    const matchTipo = pmrrFiltros.tipos.length === 0 || pmrrFiltros.tipos.includes(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado');
+    const matchStatus = pmrrFiltros.status.length === 0 || pmrrFiltros.status.includes(normalizedStatus);
+    const matchTipo = pmrrFiltros.tipos.length === 0 || pmrrFiltros.tipos.includes(normalizedRisk);
     const matchPorte = pmrrFiltros.porte.length === 0 || pmrrFiltros.porte.includes(m.porte || 'Não informado');
     const matchPib = pmrrFiltros.pib.length === 0 || pmrrFiltros.pib.includes(getPibFaixa(m.pib_per_capita));
     const matchBarragem = pmrrFiltros.barragem.length === 0 ||
@@ -602,7 +680,7 @@ function applyPMRRFilters() {
 
 function applyMineradorasFilters() {
   mineradorasFiltradas = mineradoras.filter(m => {
-    const matchBusca = !mineradorasBusca || [m.empresa, m.operacao, m.uf, estadosBrasil[m.uf], m.minerio_referencia, m.municipio].some(v => normalizeText(v).includes(normalizeText(mineradorasBusca)));
+    const matchBusca = !mineradorasBusca || [m.empresa, m.operacao, m.uf, getEstadoLabel(m.uf), m.minerio_referencia, m.municipio].some(v => normalizeText(v).includes(normalizeText(mineradorasBusca)));
     const matchUF = mineradorasFiltros.uf.length === 0 || mineradorasFiltros.uf.includes(m.uf);
     const matchMinerio = mineradorasFiltros.minerio.length === 0 || mineradorasFiltros.minerio.includes(m.minerio_referencia || 'Não informado');
     const matchCri = mineradorasFiltros.cri.length === 0 || mineradorasFiltros.cri.includes(m.cri_max || 'Não informado');
@@ -641,8 +719,8 @@ function updatePMRR() {
 }
 
 function renderPMRRCharts() {
-  const statusData = topCounts(pmrrFiltrados, m => m.status_pmrr || 'SEM REGISTRO', 6);
-  const tipoData = topCounts(pmrrFiltrados, m => m.tipo_risco_padronizado || m.tipo_risco || 'Não informado', 6);
+  const statusData = topCounts(pmrrFiltrados, m => normalizePMRRStatus(m.status_pmrr || 'SEM REGISTRO'), 6);
+  const tipoData = topCounts(pmrrFiltrados, m => normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco || 'Não informado'), 6);
   if (chartStatus) chartStatus.destroy();
   if (chartTipo) chartTipo.destroy();
   chartStatus = new Chart(document.getElementById('graficoStatus'), {
@@ -675,12 +753,12 @@ function renderPMRRList() {
       <div class="flex justify-between gap-4">
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <h4 class="font-semibold text-gray-900">${m.nome} <span class="text-gray-400 font-normal">· ${m.uf}</span></h4>
+            <h4 class="font-semibold text-gray-900">${m.nome} <span class="text-gray-400 font-normal">· ${getEstadoLabel(m.uf)}</span></h4>
             ${badgeForPMRR(m.status_pmrr)}
             ${m.tem_barragens ? '<span class="badge bg-soft-blue">Com barragens</span>' : ''}
           </div>
           <div class="text-sm text-gray-600 mt-2 flex flex-wrap gap-2">
-            ${badgeForRiskType(m.tipo_risco_padronizado || m.tipo_risco)}
+            ${badgeForRiskType(normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco))}
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
             <div><div class="text-gray-400 text-xs">População</div><div class="font-medium">${formatNumber(m.populacao)}</div></div>
@@ -688,7 +766,7 @@ function renderPMRRList() {
             <div><div class="text-gray-400 text-xs">PIB per capita</div><div class="font-medium">${formatCurrency(m.pib_per_capita)}</div></div>
             <div><div class="text-gray-400 text-xs">Barragens</div><div class="font-medium">${formatNumber(m.qtd_barragens)}</div></div>
           </div>
-          <div class="text-xs text-gray-500 mt-3">Fonte PMRR: ${m.fonte_pmrr || '-'} · Porte: ${m.porte || 'Não informado'}</div>
+          <div class="text-xs text-gray-500 mt-3">Fonte PMRR: ${m.fonte_pmrr || '-'} · Porte: ${m.porte || 'Não informado'} · Status padronizado: ${normalizePMRRStatus(m.status_pmrr)}</div>
         </div>
         <div class="flex-shrink-0">
           <button onclick="addToCRM('pmrr','${getCRMIdFromPMRR(m).replace(/'/g, "\\'")}')" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
@@ -745,7 +823,7 @@ function renderMineradorasList() {
       <div class="flex justify-between gap-4">
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <h4 class="font-semibold text-gray-900">${m.operacao || m.empresa} <span class="text-gray-400 font-normal">· ${m.uf}</span></h4>
+            <h4 class="font-semibold text-gray-900">${m.operacao || m.empresa} <span class="text-gray-400 font-normal">· ${getEstadoLabel(m.uf)}</span></h4>
             ${badgeForCRI(m.cri_max)}
             ${badgeForDPA(m.dpa_max)}
             ${badgeForEmergency(m.nivel_emergencia)}
@@ -778,6 +856,64 @@ function renderMineradorasList() {
   document.getElementById('min-info-paginacao').textContent = `Página ${mineradorasPagina} de ${totalPages} · ${formatNumber(mineradorasFiltradas.length)} resultados`;
 }
 
+function buildGlobalSearchResults(query) {
+  if (!query || query.trim().length < 2) return [];
+  const q = normalizeText(query);
+  const pmrrResults = municipios.filter(m => [m.nome, getEstadoLabel(m.uf), normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco), normalizePMRRStatus(m.status_pmrr)].some(v => normalizeText(v).includes(q))).slice(0, 4).map(m => ({
+    kind: 'pmrr',
+    title: `${m.nome} · ${getEstadoLabel(m.uf)}`,
+    subtitle: `${normalizePMRRRisk(m.tipo_risco_padronizado || m.tipo_risco)} · ${normalizePMRRStatus(m.status_pmrr)}`,
+    id: getCRMIdFromPMRR(m)
+  }));
+  const minResults = mineradoras.filter(m => [m.empresa, m.operacao, m.municipio, getEstadoLabel(m.uf), m.minerio_referencia].some(v => normalizeText(v).includes(q))).slice(0, 4).map(m => ({
+    kind: 'mineradoras',
+    title: `${m.operacao || m.empresa} · ${getEstadoLabel(m.uf)}`,
+    subtitle: `${m.empresa} · ${m.minerio_referencia || 'Minério não informado'}`,
+    id: getCRMIdFromMineradora(m)
+  }));
+  return [...pmrrResults, ...minResults].slice(0, 8);
+}
+
+function renderSearchSuggestions(query) {
+  const box = document.getElementById('searchSuggestions');
+  const results = buildGlobalSearchResults(query);
+  if (!results.length) {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = results.map(item => `
+    <div class="search-suggestion" onclick="jumpToSearchResult('${item.kind}','${item.id.replace(/'/g, "\'")}')">
+      <div>
+        <div class="text-sm font-semibold text-gray-900">${item.title}</div>
+        <div class="text-xs text-gray-500 mt-1">${item.subtitle}</div>
+      </div>
+      <span class="tag-chip ${item.kind === 'pmrr' ? 'tag-pmrr' : 'tag-min'}">${item.kind === 'pmrr' ? 'PMRR' : 'Mineradoras'}</span>
+    </div>
+  `).join('');
+  box.classList.remove('hidden');
+}
+
+function jumpToSearchResult(kind, id) {
+  document.getElementById('searchSuggestions').classList.add('hidden');
+  if (kind === 'pmrr') {
+    const item = municipios.find(m => getCRMIdFromPMRR(m) === id);
+    if (!item) return;
+    activeTab = 'pmrr';
+    pmrrBusca = item.nome;
+    document.getElementById('searchInput').value = item.nome;
+    applyPMRRFilters();
+  } else {
+    const item = mineradoras.find(m => getCRMIdFromMineradora(m) === id);
+    if (!item) return;
+    activeTab = 'mineradoras';
+    mineradorasBusca = item.operacao || item.empresa;
+    document.getElementById('searchInput').value = item.operacao || item.empresa;
+    applyMineradorasFilters();
+  }
+  renderApp();
+}
+
 function renderApp() {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === activeTab));
   document.getElementById('section-pmrr').classList.toggle('hidden', activeTab !== 'pmrr');
@@ -787,10 +923,10 @@ function renderApp() {
   const headerContext = document.getElementById('headerContext');
   if (activeTab === 'pmrr') {
     headerContext.textContent = 'PMRR · Base territorial';
-    document.getElementById('searchInput').placeholder = 'Buscar município, UF, estado ou tipo de risco...';
+    document.getElementById('searchInput').placeholder = 'Buscar em toda a plataforma ou filtre na aba ativa...';
   } else if (activeTab === 'mineradoras') {
     headerContext.textContent = 'Mineradoras · Prioridade máxima';
-    document.getElementById('searchInput').placeholder = 'Buscar empresa, operação, UF, município ou minério...';
+    document.getElementById('searchInput').placeholder = 'Buscar em toda a plataforma ou filtre na aba ativa...';
   } else {
     headerContext.textContent = 'CRM · Execução comercial';
   }
@@ -838,6 +974,7 @@ document.getElementById('mineradorasOrdenarPor').addEventListener('change', () =
 });
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
+  renderSearchSuggestions(e.target.value);
   if (activeTab === 'pmrr') {
     pmrrBusca = e.target.value;
     pmrrPagina = 1;
@@ -846,6 +983,12 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     mineradorasBusca = e.target.value;
     mineradorasPagina = 1;
     applyMineradorasFilters();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('toolbarBusca').contains(e.target)) {
+    document.getElementById('searchSuggestions').classList.add('hidden');
   }
 });
 
